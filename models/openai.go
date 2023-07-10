@@ -7,20 +7,13 @@ import (
 	"github.com/sashabaranov/go-openai"
 	"golangchain/generations"
 	"golangchain/messages"
+	"golangchain/utils"
 )
 
 type OpenAIModel struct {
 	APIKey string
 	*OpenAIModelOption
 }
-
-type OpenAIModelOption struct {
-	MaxToken    int
-	ModelName   string
-	Temperature float32
-}
-
-type OptionSet func(option *OpenAIModelOption)
 
 func (opm *OpenAIModel) Generate(messages []messages.Message) *generations.Generation {
 	client := openai.NewClient(opm.APIKey)
@@ -58,11 +51,17 @@ func (opm *OpenAIModel) Generate(messages []messages.Message) *generations.Gener
 	}
 }
 
-func NewOpenAIModel(apiKey string, optionSets ...OptionSet) *OpenAIModel {
+type OpenAIModelOption struct {
+	MaxToken    int
+	ModelName   string
+	Temperature float32
+}
+
+func NewOpenAIModel(apiKey string, optionSets ...utils.OptionSet) *OpenAIModel {
 	option := &OpenAIModelOption{
 		ModelName:   "gpt-3.5-turbo-0613",
 		MaxToken:    400,
-		Temperature: 0.0,
+		Temperature: 0.7,
 	}
 
 	for _, optionSet := range optionSets {
