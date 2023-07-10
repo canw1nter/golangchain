@@ -1,5 +1,10 @@
 package models
 
+import (
+	"golangchain/generations"
+	"golangchain/messages"
+)
+
 type IBaseLanguageModel interface {
-	Generate()
+	Generate(messages []messages.Message) *generations.Generation
 }

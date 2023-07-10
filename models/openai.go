@@ -3,7 +3,10 @@ package models
 import (
 	"context"
 	"fmt"
+	"github.com/fatih/structs"
 	"github.com/sashabaranov/go-openai"
+	"golangchain/generations"
+	"golangchain/messages"
 )
 
 type OpenAIModel struct {
@@ -19,29 +22,40 @@ type OpenAIModelOption struct {
 
 type OptionSet func(option *OpenAIModelOption)
 
-func (opm *OpenAIModel) Generate() {
+func (opm *OpenAIModel) Generate(messages []messages.Message) *generations.Generation {
 	client := openai.NewClient(opm.APIKey)
+
+	var messagesParam []openai.ChatCompletionMessage
+	for _, m := range messages {
+		openaiM := openai.ChatCompletionMessage{
+			Role:    m.Role,
+			Content: m.Content,
+		}
+
+		messagesParam = append(messagesParam, openaiM)
+	}
+
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
 			Model:       opm.ModelName,
 			MaxTokens:   opm.MaxToken,
 			Temperature: opm.Temperature,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: "Hello",
-				},
-			},
+			Messages:    messagesParam,
 		},
 	)
 
 	if err != nil {
 		fmt.Printf("err: %v", err)
-		return
+		return nil
 	}
 
-	fmt.Println(resp.Choices[0].Message.Content)
+	m := structs.Map(resp)
+
+	return &generations.Generation{
+		Text: resp.Choices[0].Message.Content,
+		All:  m,
+	}
 }
 
 func NewOpenAIModel(apiKey string, optionSets ...OptionSet) *OpenAIModel {
