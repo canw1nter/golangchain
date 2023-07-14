@@ -3,16 +3,45 @@ package models
 import (
 	"context"
 	"fmt"
-	"github.com/fatih/structs"
-	"github.com/sashabaranov/go-openai"
+
 	"golangchain/generations"
 	"golangchain/messages"
 	"golangchain/utils"
+
+	"github.com/fatih/structs"
+	"github.com/sashabaranov/go-openai"
 )
+
+type OpenAIModelOption struct {
+	MaxToken    int
+	ModelName   string
+	Temperature float32
+}
 
 type OpenAIModel struct {
 	APIKey string
 	*OpenAIModelOption
+}
+
+func (opm *OpenAIModel) SetOptions(opts ...utils.Options) {
+	for _, opt := range opts {
+		opt(opm.OpenAIModelOption)
+	}
+}
+
+func NewOpenAIModel(apiKey string, opts ...utils.Options) *OpenAIModel {
+	model := &OpenAIModel{
+		APIKey: apiKey,
+		OpenAIModelOption: &OpenAIModelOption{
+			ModelName:   "gpt-3.5-turbo-0613",
+			MaxToken:    400,
+			Temperature: 0.7,
+		},
+	}
+
+	model.SetOptions(opts...)
+
+	return model
 }
 
 func (opm *OpenAIModel) Generate(messages []messages.Message) *generations.Generation {
@@ -49,29 +78,4 @@ func (opm *OpenAIModel) Generate(messages []messages.Message) *generations.Gener
 		Text: resp.Choices[0].Message.Content,
 		All:  m,
 	}
-}
-
-type OpenAIModelOption struct {
-	MaxToken    int
-	ModelName   string
-	Temperature float32
-}
-
-func NewOpenAIModel(apiKey string, optionSets ...utils.OptionSet) *OpenAIModel {
-	option := &OpenAIModelOption{
-		ModelName:   "gpt-3.5-turbo-0613",
-		MaxToken:    400,
-		Temperature: 0.7,
-	}
-
-	for _, optionSet := range optionSets {
-		optionSet(option)
-	}
-
-	model := &OpenAIModel{
-		APIKey: apiKey,
-	}
-	model.OpenAIModelOption = option
-
-	return model
 }
