@@ -1,11 +1,10 @@
-package prompts
+package prompt
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 
-	"golangchain/utils"
+	"golangchain/common"
 )
 
 type PromptOption struct {
@@ -17,33 +16,29 @@ type Prompt struct {
 	*PromptOption
 }
 
-func (p *Prompt) SetOptions(opts ...utils.Options) {
+func (p *Prompt) SetOptions(opts ...common.Options) {
 	for _, opt := range opts {
 		opt(p.PromptOption)
 	}
 }
 
-func (p *Prompt) GetText() string {
+func (p *Prompt) GetText() (string, error) {
 	var w = bytes.NewBuffer(nil)
 
-	t, err := template.New("123").Parse(p.Template)
+	t, err := template.New("").Parse(p.Template)
 	if err != nil {
-		// todo handle err
-		fmt.Println(err.Error())
-		return ""
+		return "", err
 	}
 
 	err = t.Execute(w, p.Variables)
 	if err != nil {
-		// todo handle err
-		fmt.Println(err.Error())
-		return ""
+		return "", err
 	}
 
-	return string(w.Bytes())
+	return string(w.Bytes()), nil
 }
 
-func NewPrompt(template string, opts ...utils.Options) *Prompt {
+func NewPrompt(template string, opts ...common.Options) *Prompt {
 	prompt := &Prompt{
 		Template: template,
 		PromptOption: &PromptOption{
@@ -56,7 +51,7 @@ func NewPrompt(template string, opts ...utils.Options) *Prompt {
 	return prompt
 }
 
-func WithVariables(variables map[string]interface{}) utils.Options {
+func WithVariables(variables map[string]interface{}) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*PromptOption); ok {
 			options.Variables = variables

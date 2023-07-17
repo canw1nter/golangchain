@@ -1,4 +1,4 @@
-package messages
+package message
 
 type Message struct {
 	Role    string

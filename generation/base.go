@@ -1,4 +1,4 @@
-package generations
+package generation
 
 type Generation struct {
 	Text string

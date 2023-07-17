@@ -1,4 +1,4 @@
-package utils
+package common
 
 // IOptions 所有具有可选参数的结构体都应实现该接口来设置可选字段
 type IOptions interface {
