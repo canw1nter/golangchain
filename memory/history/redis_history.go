@@ -1,6 +1,9 @@
 package history
 
 import (
+	"context"
+	"time"
+
 	"golangchain/common"
 	"golangchain/message"
 
@@ -10,7 +13,7 @@ import (
 type RedisHistoryOption struct {
 	Url    string
 	Prefix string
-	TTL    int
+	TTL    time.Duration
 }
 
 type RedisHistory struct {
@@ -26,14 +29,14 @@ func (rh *RedisHistory) SetOptions(opts ...common.Options) {
 	}
 }
 
-func (rh *RedisHistory) Add(message []message.Message) {
-	//TODO implement me
-	panic("implement me")
+func (rh *RedisHistory) Add(messages []message.Message) {
+	for _, m := range messages {
+		rh.client.Set(context.Background(), rh.Prefix+rh.SessionId, m, rh.TTL)
+	}
 }
 
 func (rh *RedisHistory) Clear() {
-	//TODO implement me
-	panic("implement me")
+	rh.client.Del(context.Background(), rh.Prefix+rh.SessionId)
 }
 
 func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, error) {
@@ -43,7 +46,7 @@ func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, e
 		RedisHistoryOption: &RedisHistoryOption{
 			Url:    "redis://localhost:6379/0",
 			Prefix: "GLC_HISTORY:",
-			TTL:    3600,
+			TTL:    0,
 		},
 	}
 
@@ -74,7 +77,7 @@ func WithPrefix(Prefix string) common.Options {
 	}
 }
 
-func WithTTL(TTL int) common.Options {
+func WithTTL(TTL time.Duration) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*RedisHistoryOption); ok {
 			options.TTL = TTL
