@@ -2,6 +2,7 @@ package history
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"golangchain/common"
@@ -17,9 +18,9 @@ type RedisHistoryOption struct {
 }
 
 type RedisHistory struct {
-	*History
-	client    *redis.Client
-	SessionId string
+	client       *redis.Client
+	SessionId    string
+	messageIndex int
 	*RedisHistoryOption
 }
 
@@ -29,9 +30,33 @@ func (rh *RedisHistory) SetOptions(opts ...common.Options) {
 	}
 }
 
+func (rh *RedisHistory) Get() ([]message.Message, error) {
+	messages := make([]message.Message, 0)
+
+	data, err := rh.client.HGetAll(context.Background(), rh.Prefix+rh.SessionId).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) != 0 {
+		for _, v := range data {
+			var m message.Message
+			err = json.Unmarshal([]byte(v), &m)
+			if err != nil {
+				return nil, err
+			}
+
+			messages = append(messages, m)
+		}
+	}
+
+	return messages, nil
+}
+
 func (rh *RedisHistory) Add(messages []message.Message) {
 	for _, m := range messages {
-		rh.client.Set(context.Background(), rh.Prefix+rh.SessionId, m, rh.TTL)
+		rh.client.HSet(context.Background(), rh.Prefix+rh.SessionId, rh.messageIndex, m, rh.TTL)
+		rh.messageIndex += 1
 	}
 }
 
@@ -41,8 +66,8 @@ func (rh *RedisHistory) Clear() {
 
 func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, error) {
 	history := &RedisHistory{
-		History:   &History{Messages: make([]message.Message, 0)},
-		SessionId: SessionId,
+		SessionId:    SessionId,
+		messageIndex: 0,
 		RedisHistoryOption: &RedisHistoryOption{
 			Url:    "redis://localhost:6379/0",
 			Prefix: "GLC_HISTORY:",
@@ -50,13 +75,13 @@ func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, e
 		},
 	}
 
+	history.SetOptions(opts...)
+
 	redisOpt, err := redis.ParseURL(history.Url)
 	if err != nil {
 		return nil, err
 	}
 	history.client = redis.NewClient(redisOpt)
-
-	history.SetOptions(opts...)
 
 	return history, nil
 }
