@@ -62,6 +62,7 @@ func (rh *RedisHistory) Add(messages []message.Message) {
 
 func (rh *RedisHistory) Clear() {
 	rh.client.Del(context.Background(), rh.Prefix+rh.SessionId)
+	rh.messageIndex = 0
 }
 
 func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, error) {

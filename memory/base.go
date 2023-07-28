@@ -10,7 +10,7 @@ type Memory struct {
 }
 
 type IMemory interface {
-	GetMemory() []message.Message
+	GetAllMemory() []message.Message
 	ClearMemory()
 	SaveToMemory([]message.Message)
 }
