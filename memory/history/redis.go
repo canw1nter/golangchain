@@ -18,9 +18,8 @@ type RedisHistoryOption struct {
 }
 
 type RedisHistory struct {
-	client       *redis.Client
-	SessionId    string
-	messageIndex int
+	client    *redis.Client
+	SessionId string
 	*RedisHistoryOption
 }
 
@@ -55,20 +54,17 @@ func (rh *RedisHistory) Get() ([]message.Message, error) {
 
 func (rh *RedisHistory) Add(messages []message.Message) {
 	for _, m := range messages {
-		rh.client.HSet(context.Background(), rh.Prefix+rh.SessionId, rh.messageIndex, m, rh.TTL)
-		rh.messageIndex += 1
+		rh.client.LPush(context.Background(), rh.Prefix+rh.SessionId, m)
 	}
 }
 
 func (rh *RedisHistory) Clear() {
 	rh.client.Del(context.Background(), rh.Prefix+rh.SessionId)
-	rh.messageIndex = 0
 }
 
 func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, error) {
 	history := &RedisHistory{
-		SessionId:    SessionId,
-		messageIndex: 0,
+		SessionId: SessionId,
 		RedisHistoryOption: &RedisHistoryOption{
 			Url:    "redis://localhost:6379/0",
 			Prefix: "GLC_HISTORY:",
