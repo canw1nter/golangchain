@@ -15,12 +15,11 @@ type IMemory interface {
 type MemoryOption struct {
 	TokenCount common.TokenCountHandler
 	TokenLimit int
+	History    history.IHistory
 }
 
 type Memory struct {
 	messages []message.Message
-	buffered bool
-	History  history.IHistory
 	*MemoryOption
 }
 
@@ -31,7 +30,7 @@ func (m *Memory) SetOptions(opts ...common.Options) {
 }
 
 func (m *Memory) GetMemory() (*[]message.Message, error) {
-	if len(m.messages) == 0 {
+	if len(m.messages) == 0 && m.History != nil {
 		histories, err := m.History.Get()
 		if err != nil {
 			return nil, err
@@ -50,16 +49,53 @@ func (m *Memory) GetMemory() (*[]message.Message, error) {
 
 func (m *Memory) ClearMemory() {
 	m.messages = make([]message.Message, 0)
-	m.History.Clear()
+	if m.History != nil {
+		m.History.Clear()
+	}
 }
 
 func (m *Memory) SaveToMemory(messages []message.Message) {
-	m.History.Add(messages)
+	if m.History != nil {
+		m.History.Add(messages)
+	}
+
 	m.messages = append(messages, m.messages...)
 
 	if m.TokenLimit > 0 {
 		for m.TokenCount(m.messages) > m.TokenLimit {
 			m.messages = m.messages[:len(m.messages)-1]
+		}
+	}
+}
+
+func NewMemory(opts ...common.Options) *Memory {
+	memory := &Memory{
+		messages: make([]message.Message, 0),
+		MemoryOption: &MemoryOption{
+			History:    nil,
+			TokenLimit: 0,
+			TokenCount: nil,
+		},
+	}
+
+	memory.SetOptions(opts...)
+
+	return memory
+}
+
+func WithTokenLimit(tokenLimit int, tokenCount common.TokenCountHandler) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*MemoryOption); ok {
+			options.TokenLimit = tokenLimit
+			options.TokenCount = tokenCount
+		}
+	}
+}
+
+func WithHistory(history history.IHistory) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*MemoryOption); ok {
+			options.History = history
 		}
 	}
 }

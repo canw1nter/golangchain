@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"fmt"
 
 	"golangchain/common"
 	"golangchain/generation"
@@ -29,7 +28,7 @@ func (opm *OpenAIModel) SetOptions(opts ...common.Options) {
 	}
 }
 
-func (opm *OpenAIModel) Generate(messages []message.Message) *generation.Generation {
+func (opm *OpenAIModel) Generate(messages []message.Message) (*generation.Generation, error) {
 	client := openai.NewClient(opm.APIKey)
 
 	var messagesParam []openai.ChatCompletionMessage
@@ -53,8 +52,7 @@ func (opm *OpenAIModel) Generate(messages []message.Message) *generation.Generat
 	)
 
 	if err != nil {
-		fmt.Printf("err: %v", err)
-		return nil
+		return nil, err
 	}
 
 	m := structs.Map(resp)
@@ -62,7 +60,7 @@ func (opm *OpenAIModel) Generate(messages []message.Message) *generation.Generat
 	return &generation.Generation{
 		Text: resp.Choices[0].Message.Content,
 		All:  m,
-	}
+	}, nil
 }
 
 func (opm *OpenAIModel) TokenCountFunc() common.TokenCountHandler {
@@ -84,4 +82,27 @@ func NewOpenAIModel(apiKey string, opts ...common.Options) *OpenAIModel {
 	model.SetOptions(opts...)
 
 	return model
+}
+
+func WithMaxToken(maxToken int) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*OpenAIModelOption); ok {
+			options.MaxToken = maxToken
+		}
+	}
+}
+func WithModelName(modelName string) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*OpenAIModelOption); ok {
+			options.ModelName = modelName
+		}
+	}
+}
+
+func WithTemperature(temperature float32) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*OpenAIModelOption); ok {
+			options.Temperature = temperature
+		}
+	}
 }

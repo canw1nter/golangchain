@@ -82,26 +82,26 @@ func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, e
 	return history, nil
 }
 
-func WithUrl(Url string) common.Options {
+func WithUrl(url string) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*RedisHistoryOption); ok {
-			options.Url = Url
+			options.Url = url
 		}
 	}
 }
 
-func WithPrefix(Prefix string) common.Options {
+func WithPrefix(prefix string) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*RedisHistoryOption); ok {
-			options.Prefix = Prefix
+			options.Prefix = prefix
 		}
 	}
 }
 
-func WithTTL(TTL time.Duration) common.Options {
+func WithTTL(ttl time.Duration) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*RedisHistoryOption); ok {
-			options.TTL = TTL
+			options.TTL = ttl
 		}
 	}
 }
