@@ -65,6 +65,12 @@ func (opm *OpenAIModel) Generate(messages []message.Message) *generation.Generat
 	}
 }
 
+func (opm *OpenAIModel) TokenCountFunc() common.TokenCountHandler {
+	return func(messages []message.Message) int {
+		panic("nothing to do")
+	}
+}
+
 func NewOpenAIModel(apiKey string, opts ...common.Options) *OpenAIModel {
 	model := &OpenAIModel{
 		APIKey: apiKey,

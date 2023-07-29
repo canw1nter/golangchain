@@ -29,10 +29,10 @@ func (rh *RedisHistory) SetOptions(opts ...common.Options) {
 	}
 }
 
-func (rh *RedisHistory) Get() ([]message.Message, error) {
+func (rh *RedisHistory) Get() (*[]message.Message, error) {
 	messages := make([]message.Message, 0)
 
-	data, err := rh.client.HGetAll(context.Background(), rh.Prefix+rh.SessionId).Result()
+	data, err := rh.client.LRange(context.Background(), rh.Prefix+rh.SessionId, 0, -1).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +49,12 @@ func (rh *RedisHistory) Get() ([]message.Message, error) {
 		}
 	}
 
-	return messages, nil
+	return &messages, nil
 }
 
 func (rh *RedisHistory) Add(messages []message.Message) {
-	for _, m := range messages {
-		rh.client.LPush(context.Background(), rh.Prefix+rh.SessionId, m)
-	}
+	rh.client.LPush(context.Background(), rh.Prefix+rh.SessionId, messages)
+	rh.client.Expire(context.Background(), rh.Prefix+rh.SessionId, rh.TTL)
 }
 
 func (rh *RedisHistory) Clear() {

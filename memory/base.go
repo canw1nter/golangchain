@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"golangchain/common"
 	"golangchain/memory/history"
 	"golangchain/message"
 )
@@ -11,29 +12,40 @@ type IMemory interface {
 	SaveToMemory([]message.Message)
 }
 
-type Memory struct {
-	History    history.IHistory
-	messages   []message.Message
-	tokenCount func(messages []message.Message) int
+type MemoryOption struct {
+	TokenCount common.TokenCountHandler
 	TokenLimit int
 }
 
-func (m *Memory) GetMemory() ([]message.Message, error) {
-	if m.messages == nil || len(m.messages) == 0 {
+type Memory struct {
+	messages []message.Message
+	buffered bool
+	History  history.IHistory
+	*MemoryOption
+}
+
+func (m *Memory) SetOptions(opts ...common.Options) {
+	for _, opt := range opts {
+		opt(m.MemoryOption)
+	}
+}
+
+func (m *Memory) GetMemory() (*[]message.Message, error) {
+	if len(m.messages) == 0 {
 		histories, err := m.History.Get()
 		if err != nil {
 			return nil, err
 		}
-		m.messages = histories
+		m.messages = *histories
 	}
 
 	if m.TokenLimit > 0 {
-		for m.tokenCount(m.messages) > m.TokenLimit {
+		for m.TokenCount(m.messages) > m.TokenLimit {
 			m.messages = m.messages[:len(m.messages)-1]
 		}
 	}
 
-	return m.messages, nil
+	return &m.messages, nil
 }
 
 func (m *Memory) ClearMemory() {
@@ -46,7 +58,7 @@ func (m *Memory) SaveToMemory(messages []message.Message) {
 	m.messages = append(messages, m.messages...)
 
 	if m.TokenLimit > 0 {
-		for m.tokenCount(m.messages) > m.TokenLimit {
+		for m.TokenCount(m.messages) > m.TokenLimit {
 			m.messages = m.messages[:len(m.messages)-1]
 		}
 	}

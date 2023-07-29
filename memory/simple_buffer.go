@@ -6,17 +6,14 @@ type BufferMemory struct {
 	*Memory
 }
 
-func (bm *BufferMemory) GetMemory() []message.Message {
-	//TODO implement me
-	panic("implement me")
+func (bm *BufferMemory) GetMemory() (*[]message.Message, error) {
+	return bm.Memory.GetMemory()
 }
 
 func (bm *BufferMemory) ClearMemory() {
-	//TODO implement me
-	panic("implement me")
+	bm.Memory.ClearMemory()
 }
 
 func (bm *BufferMemory) SaveToMemory(messages []message.Message) {
-	//TODO implement me
-	panic("implement me")
+	bm.Memory.SaveToMemory(messages)
 }
