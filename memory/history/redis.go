@@ -8,6 +8,7 @@ import (
 	"golangchain/common"
 	"golangchain/message"
 
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -34,7 +35,7 @@ func (rh *RedisHistory) Get() (*[]message.Message, error) {
 
 	data, err := rh.client.LRange(context.Background(), rh.Prefix+rh.SessionId, 0, -1).Result()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get history failed")
 	}
 
 	if len(data) != 0 {
@@ -42,7 +43,7 @@ func (rh *RedisHistory) Get() (*[]message.Message, error) {
 			var m message.Message
 			err = json.Unmarshal([]byte(v), &m)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "get history failed")
 			}
 
 			messages = append(messages, m)
@@ -75,7 +76,7 @@ func NewRedisHistory(SessionId string, opts ...common.Options) (*RedisHistory, e
 
 	redisOpt, err := redis.ParseURL(history.Url)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "create new redis history failed")
 	}
 	history.client = redis.NewClient(redisOpt)
 

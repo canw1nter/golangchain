@@ -5,6 +5,8 @@ import (
 	"text/template"
 
 	"golangchain/common"
+
+	"github.com/pkg/errors"
 )
 
 type PromptOption struct {
@@ -27,12 +29,12 @@ func (p *Prompt) GetText() (string, error) {
 
 	t, err := template.New("").Parse(p.Template)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "get prompt text failed")
 	}
 
 	err = t.Execute(w, p.Variables)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "get prompt text failed")
 	}
 
 	return string(w.Bytes()), nil

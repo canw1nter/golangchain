@@ -4,6 +4,8 @@ import (
 	"golangchain/common"
 	"golangchain/memory/history"
 	"golangchain/message"
+
+	"github.com/pkg/errors"
 )
 
 type IMemory interface {
@@ -33,7 +35,7 @@ func (m *Memory) GetMemory() (*[]message.Message, error) {
 	if len(m.messages) == 0 && m.History != nil {
 		histories, err := m.History.Get()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "get memory failed")
 		}
 		m.messages = *histories
 	}
