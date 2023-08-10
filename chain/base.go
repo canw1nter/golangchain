@@ -8,14 +8,16 @@ import (
 )
 
 type IChain interface {
-	Run(inputs map[string]interface{}) (outputs interface{})
+	Run(map[string]interface{}) (map[string]interface{}, error)
 }
 
 type ChainOption struct {
-	NextChain IChain
-	Memory    memory.IMemory
-	Model     model.ILanguageModel
-	Prompt    prompt.Prompt
+	NextChain  IChain
+	Memory     memory.IMemory
+	Model      model.ILanguageModel
+	Prompt     prompt.Prompt
+	inputKeys  []string
+	outputKeys []string
 }
 
 type Chain struct {
@@ -28,13 +30,13 @@ func (c *Chain) SetOptions(opts ...common.Options) {
 	}
 }
 
-func (c *Chain) Run(inputs map[string]interface{}) (outputs interface{}) {
+func (c *Chain) Run(inputs map[string]interface{}) (map[string]interface{}, error) {
 	// do something
 	// then run next chain if not nil
 	if c.NextChain != nil {
 		return c.NextChain.Run(inputs)
 	} else {
-		return outputs
+		return inputs, nil
 	}
 }
 

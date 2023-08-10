@@ -7,6 +7,6 @@ import (
 )
 
 type ILanguageModel interface {
-	Generate(messages []message.Message) *generation.Generation
+	Generate(messages []message.Message) (*generation.Generation, error)
 	TokenCountFunc() common.TokenCountHandler
 }

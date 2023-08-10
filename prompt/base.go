@@ -44,7 +44,7 @@ func NewPrompt(template string, opts ...common.Options) *Prompt {
 	prompt := &Prompt{
 		Template: template,
 		PromptOption: &PromptOption{
-			Variables: nil,
+			Variables: make(map[string]interface{}),
 		},
 	}
 
