@@ -9,6 +9,7 @@ import (
 
 type IChain interface {
 	Run(map[string]interface{}) (map[string]interface{}, error)
+	verifyInputKeys(inputs map[string]interface{}) bool
 }
 
 type ChainOption struct {
@@ -16,8 +17,8 @@ type ChainOption struct {
 	Memory     memory.IMemory
 	Model      model.ILanguageModel
 	Prompt     prompt.Prompt
-	inputKeys  []string
-	outputKeys []string
+	InputKeys  []string
+	OutputKeys []string
 }
 
 type Chain struct {
@@ -28,6 +29,15 @@ func (c *Chain) SetOptions(opts ...common.Options) {
 	for _, opt := range opts {
 		opt(c.ChainOption)
 	}
+}
+
+func (c *Chain) verifyInputKeys(inputs map[string]interface{}) bool {
+	for _, inputKey := range c.InputKeys {
+		if _, ok := inputs[inputKey]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *Chain) Run(inputs map[string]interface{}) (map[string]interface{}, error) {
@@ -76,6 +86,22 @@ func WithNextChain(nextChain IChain) common.Options {
 	return func(obj interface{}) {
 		if options, ok := obj.(*ChainOption); ok {
 			options.NextChain = nextChain
+		}
+	}
+}
+
+func WithInputKeys(inputKeys []string) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*ChainOption); ok {
+			options.InputKeys = inputKeys
+		}
+	}
+}
+
+func WithOutputKeys(outputKeys []string) common.Options {
+	return func(obj interface{}) {
+		if options, ok := obj.(*ChainOption); ok {
+			options.OutputKeys = outputKeys
 		}
 	}
 }

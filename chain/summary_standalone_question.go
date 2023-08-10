@@ -18,29 +18,32 @@ type StandaloneQuestionChain struct {
 	*Chain
 }
 
+func (sqc *StandaloneQuestionChain) verifyInputKeys(inputs map[string]interface{}) bool {
+	return sqc.Chain.verifyInputKeys(inputs)
+}
+
 func (sqc *StandaloneQuestionChain) Run(inputs map[string]interface{}) (interface{}, error) {
-	if v, ok := inputs["Context"]; ok {
-		sqc.Chain.Prompt.Variables["Context"] = v
-	} else {
-		return nil, errors.New("standalone question chain run failed,not found variable 'Context' in inputs")
+	if !sqc.verifyInputKeys(inputs) {
+		return nil, errors.New("inputs are incorrect")
 	}
+	sqc.Prompt.Variables = inputs
 
 	var messages []message.Message
-	if sqc.Chain.Memory != nil {
-		messages = sqc.Chain.Memory.GetMemory()
+	if sqc.Memory != nil {
+		messages = sqc.Memory.GetMemory()
 	} else {
 		messages = make([]message.Message, 1)
 	}
 
-	text, err := sqc.Chain.Prompt.GetText()
+	text, err := sqc.Prompt.GetText()
 	if err != nil {
 		return nil, errors.Wrap(err, "standalone question chain run failed")
 	}
 	messages = append(messages, message.Message{Role: "system", Content: text})
 
 	var result *generation.Generation
-	if sqc.Chain.Model != nil {
-		result, err = sqc.Chain.Model.Generate(messages)
+	if sqc.Model != nil {
+		result, err = sqc.Model.Generate(messages)
 		if err != nil {
 			return nil, errors.Wrap(err, "standalone question chain run failed, get generation failed")
 		}
@@ -48,7 +51,12 @@ func (sqc *StandaloneQuestionChain) Run(inputs map[string]interface{}) (interfac
 		return nil, errors.Wrap(err, "standalone question chain run failed, not set model for chain")
 	}
 
-	return sqc.Chain.Run(map[string]interface{}{"SDQ": result.Text})
+	outputs := make(map[string]interface{})
+	for _, outputKey := range sqc.OutputKeys {
+		outputs[outputKey] = result.Text
+	}
+
+	return sqc.Chain.Run(outputs)
 }
 
 func NewStandaloneQuestionChain(opts ...common.Options) *StandaloneQuestionChain {
@@ -56,13 +64,13 @@ func NewStandaloneQuestionChain(opts ...common.Options) *StandaloneQuestionChain
 		Chain: &Chain{
 			ChainOption: &ChainOption{
 				Prompt:     *prompt.NewPrompt(promptTemplate),
-				inputKeys:  []string{"Context"},
-				outputKeys: []string{"SDQ"}, // SDQ - Standalone Question
+				InputKeys:  []string{"Context"},
+				OutputKeys: []string{"SDQ"}, // SDQ - Standalone Question
 			},
 		},
 	}
 
-	sqc.Chain.SetOptions(opts...)
+	sqc.SetOptions(opts...)
 
 	return sqc
 }
