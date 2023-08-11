@@ -24,13 +24,17 @@ func (sqc *StandaloneQuestionChain) verifyInputKeys(inputs map[string]interface{
 
 func (sqc *StandaloneQuestionChain) Run(inputs map[string]interface{}) (interface{}, error) {
 	if !sqc.verifyInputKeys(inputs) {
-		return nil, errors.New("inputs are incorrect")
+		return nil, errors.New("standalone question chain run failed, inputs are incorrect")
 	}
 	sqc.Prompt.Variables = inputs
 
 	var messages []message.Message
 	if sqc.Memory != nil {
-		messages = sqc.Memory.GetMemory()
+		var err error
+		messages, err = sqc.Memory.GetMemory()
+		if err != nil {
+			return nil, errors.Wrap(err, "standalone question chain run failed")
+		}
 	} else {
 		messages = make([]message.Message, 1)
 	}
@@ -48,7 +52,7 @@ func (sqc *StandaloneQuestionChain) Run(inputs map[string]interface{}) (interfac
 			return nil, errors.Wrap(err, "standalone question chain run failed, get generation failed")
 		}
 	} else {
-		return nil, errors.Wrap(err, "standalone question chain run failed, not set model for chain")
+		return nil, errors.New("standalone question chain run failed, not set model for chain")
 	}
 
 	outputs := make(map[string]interface{})

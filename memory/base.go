@@ -9,7 +9,7 @@ import (
 )
 
 type IMemory interface {
-	GetMemory() []message.Message
+	GetMemory() ([]message.Message, error)
 	ClearMemory()
 	SaveToMemory([]message.Message)
 }
@@ -31,7 +31,7 @@ func (m *Memory) SetOptions(opts ...common.Options) {
 	}
 }
 
-func (m *Memory) GetMemory() (*[]message.Message, error) {
+func (m *Memory) GetMemory() ([]message.Message, error) {
 	if len(m.messages) == 0 && m.History != nil {
 		histories, err := m.History.Get()
 		if err != nil {
@@ -46,7 +46,7 @@ func (m *Memory) GetMemory() (*[]message.Message, error) {
 		}
 	}
 
-	return &m.messages, nil
+	return m.messages, nil
 }
 
 func (m *Memory) ClearMemory() {
