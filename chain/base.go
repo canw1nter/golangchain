@@ -9,7 +9,6 @@ import (
 
 type IChain interface {
 	Run(map[string]interface{}) (map[string]interface{}, error)
-	verifyInputKeys(inputs map[string]interface{}) bool
 }
 
 type ChainOption struct {

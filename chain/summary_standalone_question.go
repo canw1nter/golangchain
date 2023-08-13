@@ -9,17 +9,13 @@ import (
 	"golangchain/prompt"
 )
 
-const promptTemplate = `Summarize the context below as a standalone question
+const summaryQuestionPromptTemplate = `Summarize the context below as a standalone question
 
 context: {{.Context}}
 `
 
 type StandaloneQuestionChain struct {
 	*Chain
-}
-
-func (sqc *StandaloneQuestionChain) verifyInputKeys(inputs map[string]interface{}) bool {
-	return sqc.Chain.verifyInputKeys(inputs)
 }
 
 func (sqc *StandaloneQuestionChain) Run(inputs map[string]interface{}) (interface{}, error) {
@@ -67,7 +63,7 @@ func NewStandaloneQuestionChain(opts ...common.Options) *StandaloneQuestionChain
 	sqc := &StandaloneQuestionChain{
 		Chain: &Chain{
 			ChainOption: &ChainOption{
-				Prompt:     *prompt.NewPrompt(promptTemplate),
+				Prompt:     *prompt.NewPrompt(summaryQuestionPromptTemplate),
 				InputKeys:  []string{"Context"},
 				OutputKeys: []string{"SDQ"}, // SDQ - Standalone Question
 			},
